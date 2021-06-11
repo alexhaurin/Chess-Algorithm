@@ -14,20 +14,17 @@ Game::~Game() {
 void Game::Initialize() {
 
 	Object::Initialize();
+	Sound.Initialize();
 
-	m_dimensions = sf::Vector2f(1200.0, 800.0);
+	m_dimensions = sf::Vector2i(1500, 1500);
 	m_window = std::make_shared<sf::RenderWindow>(sf::VideoMode(m_dimensions.x, m_dimensions.y), "Engine2");
-	m_board = CreateBoard(m_boardSize);
+	//m_board = CreateBoard(m_boardSize, m_boardSpots);
 
-	//Load
-	if (!m_pieceTexture.loadFromFile("Images/Queen.jpg")) {
-		std::cout << "can't load queen" << std::endl;
-	}
-	
-	//Spawn
-	m_piece = CreatePiece(m_pieceTexture, sf::Vector2i(0, 0), m_boardSize/9);
-	m_pieceList.push_back(m_piece);
-	m_entityList.push_back(m_piece);
+	//PopulateBoard();
+
+	//////////////////////////// SNAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ////////////////////////////////////////////////
+	m_snake->Initialize();
+
 }
 
 void Game::Destroy() {
@@ -40,7 +37,7 @@ void Game::Destroy() {
 
 void Game::Run() {
 
-	SetFramerate(60);
+	SetFramerate(1000);
 	while (m_window->isOpen()) {
 		auto startTime = std::chrono::high_resolution_clock::now();
 		HandleEvents();
@@ -73,6 +70,7 @@ void Game::HandleEvents() {
 			Destroy();
 			break;
 		case sf::Event::Resized:
+			m_window->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
 			break;
 		case sf::Event::KeyPressed:
 			m_inputBool = true;
@@ -89,71 +87,127 @@ void Game::HandleEvents() {
 
 void Game::Update(double in_dt)
 {
-	m_mousePosition = sf::Mouse::getPosition(*m_window);
-	sf::Vector2f m_mousePositionF = sf::Vector2f(m_mousePosition);
+	//m_mousePosI = sf::Mouse::getPosition(*m_window);
+	//m_mousePos = sf::Vector2f(m_mousePosI);
+	//m_mouseBoardPos = GetMouseBoardPosition();
+	//
+	//for (auto& entity : m_entityList) {
+	//	entity->Update(dt);
+	//}
+	//
+	//for (auto& piece : m_pieceList) {
+	//	m_board->SetData(piece->GetBoardPosition(), piece);
+	//}
+	//
+	//if (m_inputState.mouseLeftPressed) {
+	//	if (m_board->GetData()[m_mouseBoardPos.x][m_mouseBoardPos.y] != nullptr) {
+	//		if (m_grabbed == nullptr) {
+	//			m_grabbed = m_board->GetData()[m_mouseBoardPos.x][m_mouseBoardPos.y];
+	//		}
+	//	}
+	//}
+	//
+	////Grab piece
+	//if (m_grabbed != nullptr) {
+	//	if (m_inputState.mouseLeftPressed) {
+	//		m_grabbed->SetPosition(sf::Vector2f(m_mousePos.x - m_grabbed->GetDimensions().x/2, m_mousePos.y - m_grabbed->GetDimensions().y/2));
+	//	}
+	//	else {
+	//		sf::Vector2i pos = m_mouseBoardPos;
+	//
+	//		if (m_grabbed->CanMove(m_board, pos)) {
+	//			m_grabbed->MoveTo(pos);
+	//			Sound.PlayPieceSound();
+	//		} else {
+	//			m_grabbed->SetBoardPosition(m_grabbed->GetBoardPosition());
+	//		}
+	//
+	//		m_grabbed = nullptr;
+	//	}
+	//}
+	//
+	////Destroy Invalid Entitys
+	//auto EraseInvalid = [](auto& entityList) {
+	//	entityList.erase(std::remove_if(entityList.begin(), entityList.end(), [](auto entity) {
+	//		return !IsValid(&*entity);
+	//	}), entityList.end());
+	//};
 
-	//Update Pieces
-	for (auto piece : m_pieceList) {
-		piece->Update(in_dt);
+	///////////////////////////////////////////////// SNAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ///////////////////////////////////////////////////////////
 
-		if (m_grabbed == nullptr) {
-			if (Math::CheckCircleCollisions(piece->GetPosition(), piece->GetDimensions().x / 2, m_mousePositionF, 10.0) && m_inputState.mouseLeftPressed) {
-				m_grabbed = piece;
-			}
-		}
+	
+
+	if (m_inputState.keyUpPressed) {
+
 	}
-
-	//Grab piece
-	if (m_grabbed != nullptr) {
-		if (m_inputState.mouseLeftPressed) {
-			m_grabbed->SetPosition(m_mousePositionF);
-		}
-		else {
-			m_grabbed->SetBoardPosition(m_grabbed->GetBoardPosition());
-		}
-	}
-
-
-
-	//Destroy Invalid Entitys
-	auto EraseInvalid = [](auto& entityList) {
-		entityList.erase(std::remove_if(entityList.begin(), entityList.end(), [](auto entity) {
-			return !IsValid(&*entity);
-		}), entityList.end());
-	};
 }
 
 void Game::Draw()
 {
+	//m_window->clear();
+	//
+	//for (auto& entity : m_entityList) {
+	//	entity->Draw(m_window);
+	//}
+	//
+	//m_window->display();
+
+	///////////////////////////////////////////// SNAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ////////////////////////////////////////////////////
+
 	m_window->clear();
-
-	//Entities
-	for (auto entity : m_entityList) {
-		entity->Draw(m_window);
-	}
-
-	m_board->Draw(m_window);
-
+	
+	
+	
 	m_window->display();
 }
 
-std::shared_ptr<Piece> Game::CreatePiece(sf::Texture& in_texture, const sf::Vector2i in_boardPos, float in_size) {
-	auto piece = SpawnWithSetup<Piece>(shared_from_this(), [this, in_texture, in_boardPos, in_size](Piece* in_player) {
-		in_player->SetTexture(in_texture);
-		in_player->SetBoardPosition(in_boardPos);
-		in_player->SetDimensions(sf::Vector2f(in_size, in_size));;
+void Game::PopulateBoard() {
+	if (!m_pieceTexture.loadFromFile("Images/Queen.jpg")) {
+		std::cout << "can't load queen" << std::endl;
+	}
+	int color = 1;
+
+	std::vector<int> rows = { 1, 6 };
+	for (auto& place : rows) {
+		for (int i = 0; i < m_boardSpots; i++) {
+			auto piece = CreatePawn(m_pieceTexture, sf::Vector2i(i, place), color, m_boardSize / m_boardSpots);
+			m_pieceList.push_back(piece);
+			m_entityList.push_back(piece);
+		}
+		color *= -1;
+	}
+}
+
+std::shared_ptr<Board> Game::CreateBoard(int in_size, int in_spots) {
+	auto board = SpawnWithSetup<Board>(shared_from_this(), [this, in_size, in_spots](Board* in_board) {
+		in_board->SetSize(in_size);
+		in_board->SetSpots(in_spots);
+	});
+	m_entityList.push_back(board);
+	return board;
+}
+
+std::shared_ptr<Piece> Game::CreatePiece(sf::Texture& in_texture, const sf::Vector2i in_boardPos, int in_color, float in_size) {
+	auto piece = SpawnWithSetup<Piece>(shared_from_this(), [this, in_texture, in_boardPos, in_color, in_size](Piece* in_piece) {
+		in_piece->SetTexture(in_texture);
+		in_piece->SetBoardPosition(in_boardPos);
+		in_piece->SetColor(in_color);
+		in_piece->SetDimensions(sf::Vector2f(in_size, in_size));;
 	});
 	return piece;
 }
 
-std::shared_ptr<Board> Game::CreateBoard(float in_size) {
-	auto board = SpawnWithSetup<Board>(shared_from_this(), [this, in_size](Board* in_board) {
-		in_board->SetSize(in_size);
+std::shared_ptr<Pawn> Game::CreatePawn(sf::Texture& in_texture, const sf::Vector2i in_boardPos, int in_color, float in_size) {
+	auto pawn = SpawnWithSetup<Pawn>(shared_from_this(), [this, in_texture, in_boardPos, in_color, in_size](Pawn* in_pawn) {
+		in_pawn->SetTexture(in_texture);
+		in_pawn->SetBoardPosition(in_boardPos);
+		in_pawn->SetColor(in_color);
+		in_pawn->SetDimensions(sf::Vector2f(in_size, in_size));;
 	});
-	return board;
+	return pawn;
 }
 
-////////////////////Input Class///////////////////
+/////////////////////////////// Input Class //////////////////////////////////////
 void Input::ClearKeyboardInputs() {
 
 	keyUpPressed = false;
@@ -202,3 +256,37 @@ void Input::CheckMouseInputs() {
 		mouseLeftReleased = true;
 	}
 }
+/////////////////////////////////////// Sound ////////////////////////////////////////////
+
+Sound::Sound() {
+
+}
+
+Sound::~Sound() {
+
+}
+
+void Sound::Initialize() {
+
+	if (!soundBuffer1.loadFromFile("Sounds/chessSound1.wav")) {
+		std::cout << "Sound1 not loaded" << std::endl;
+	}
+	pieceSounds[0].setBuffer(soundBuffer1);
+
+	if (!soundBuffer2.loadFromFile("Sounds/chessSound2.wav")) {
+		std::cout << "Sound1 not loaded" << std::endl;
+	}
+	pieceSounds[1].setBuffer(soundBuffer2);
+
+	if (!soundBuffer3.loadFromFile("Sounds/chessSound3.wav")) {
+		std::cout << "Sound1 not loaded" << std::endl;
+	}
+	pieceSounds[2].setBuffer(soundBuffer3);
+}
+
+void Sound::PlayPieceSound() {
+	int random = rand() % 3;
+
+	pieceSounds[random].play();
+}
+

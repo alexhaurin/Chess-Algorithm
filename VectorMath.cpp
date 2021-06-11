@@ -31,6 +31,10 @@ float Math::GetMagnitude(sf::Vector2f& vector) {
 	return sqrt(pow(vector.x, 2) + pow(vector.y, 2));
 }
 
+float Math::GetDistance(sf::Vector2f& in_vector1, sf::Vector2f& in_vector2) {
+	return sqrt(pow(in_vector1.x - in_vector2.x, 2) + pow(in_vector1.y - in_vector2.y, 2));
+}
+
 float Math::GetDot(sf::Vector2f& vect1, sf::Vector2f& vect2) {
 	return (vect1.x*vect2.x) + (vect1.y*vect2.y);
 }

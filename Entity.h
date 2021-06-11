@@ -18,7 +18,8 @@ public:
 
 	sf::Sprite GetSprite() const { return m_sprite; }
 	sf::Vector2f GetDimensions() const { return m_dimensions; }
-	sf::Vector2f GetPosition() {
+	sf::Vector2f GetPosition() { return m_sprite.getPosition(); }
+	sf::Vector2f GetCenterPosition() {
 		sf::Vector2f pos = m_sprite.getPosition();
 		return sf::Vector2f(pos.x + (m_dimensions.x / 2), pos.y + (m_dimensions.y / 2));
 	}

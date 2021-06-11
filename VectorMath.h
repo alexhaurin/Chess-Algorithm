@@ -16,6 +16,8 @@ namespace Vector {
 namespace Math {
 	float GetMagnitude(sf::Vector2f& vector);
 
+	float GetDistance(sf::Vector2f& in_vector1, sf::Vector2f& in_vector2);
+
 	float GetDot(sf::Vector2f& vect1, sf::Vector2f& vect2);
 
 	sf::Vector2f Normalize(sf::Vector2f& vector);
